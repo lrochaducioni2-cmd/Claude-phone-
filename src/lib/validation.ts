@@ -33,3 +33,14 @@ export type DealInput = z.infer<typeof dealSchema>;
 export const dealUpdateSchema = dealSchema.partial().extend({
   order: z.coerce.number().int().optional(),
 });
+
+export const taskSchema = z.object({
+  title: z.string().trim().min(2, "Título deve ter pelo menos 2 caracteres."),
+  description: z.string().trim().optional().or(z.literal("")),
+  dueDate: z.string().trim().optional().or(z.literal("")),
+  contactId: z.string().trim().optional().or(z.literal("")),
+  dealId: z.string().trim().optional().or(z.literal("")),
+  done: z.boolean().optional(),
+});
+
+export type TaskInput = z.infer<typeof taskSchema>;
