@@ -49,10 +49,11 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  contacts  Contact[]
-  deals     Deal[]
-  tasks     Task[]
-  quotes    Quote[]
+  contacts     Contact[]
+  deals        Deal[]
+  tasks        Task[]
+  quotes       Quote[]
+  travelPolicy TravelPolicy?
 }
 
 model Contact {
@@ -161,6 +162,38 @@ model Quote {
   @@index([contactId])
   @@index([ownerId])
   @@index([dealId])
+}
+
+// --- Política de Viagem -------------------------------------------------
+// Valores padrão para calcular despesa de deslocamento nos orçamentos.
+// Não há regra fixa de carro vs. avião: cada orçamento escolhe livremente
+// quais componentes usar (podem ser combinados, ex.: avião + carro alugado
+// no destino + combustível + estacionamento), cada um puxando o valor
+// padrão daqui, editável por orçamento quando necessário.
+
+model TravelPolicy {
+  id        String   @id @default(cuid())
+  ownerId   String   @unique
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  originCity        String @default("Criciúma/SC")
+
+  // Diária (padrão único, não varia por cidade)
+  dailyHotelRate    Float  @default(0) // R$/dia
+  dailyMealRate     Float  @default(0) // R$/dia
+
+  // Carro próprio
+  kmRate            Float  @default(0) // R$/km rodado (ida e volta)
+
+  // Avião
+  flightTicketDefault Float @default(0) // R$, valor de referência (editável por orçamento)
+
+  // Carro alugado no destino (pode ser combinado com avião)
+  rentalCarDailyRate  Float @default(0) // R$/dia
+  fuelDefault         Float @default(0) // R$, valor de referência de combustível
+  parkingDefault      Float @default(0) // R$, valor de referência de estacionamento
+
+  updatedAt DateTime @updatedAt
 }
 
 model QuoteItem {

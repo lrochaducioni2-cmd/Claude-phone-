@@ -11,5 +11,6 @@ export const config = {
     "/pipeline/:path*",
     "/tasks/:path*",
     "/quotes/:path*",
+    "/settings/:path*",
   ],
 };

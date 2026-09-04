@@ -44,3 +44,16 @@ export const taskSchema = z.object({
 });
 
 export type TaskInput = z.infer<typeof taskSchema>;
+
+export const travelPolicySchema = z.object({
+  originCity: z.string().trim().min(1, "Informe a cidade de origem."),
+  dailyHotelRate: z.coerce.number().min(0).default(0),
+  dailyMealRate: z.coerce.number().min(0).default(0),
+  kmRate: z.coerce.number().min(0).default(0),
+  flightTicketDefault: z.coerce.number().min(0).default(0),
+  rentalCarDailyRate: z.coerce.number().min(0).default(0),
+  fuelDefault: z.coerce.number().min(0).default(0),
+  parkingDefault: z.coerce.number().min(0).default(0),
+});
+
+export type TravelPolicyInput = z.infer<typeof travelPolicySchema>;
