@@ -1,0 +1,179 @@
+// Prisma schema for the CRM MVP
+// docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CUSTOMER
+  LOST
+}
+
+enum QuoteType {
+  ESTUDO_CLASSIFICACAO_DIARIA
+  PROJETO
+  CONSULTORIA
+  INSPECAO_INICIAL
+  INSPECAO_APURADA
+  INSTALACAO_TREINAMENTO
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum QuoteItemCategory {
+  MAO_DE_OBRA
+  MATERIAL
+  DESPESA
+  OUTROS
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  contacts  Contact[]
+  deals     Deal[]
+  tasks     Task[]
+  quotes    Quote[]
+}
+
+model Contact {
+  id        String     @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  notes     String?
+  status    LeadStatus @default(NEW)
+  ownerId   String
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  deals     Deal[]
+  tasks     Task[]
+  quotes    Quote[]
+
+  @@index([ownerId])
+}
+
+model PipelineStage {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  color     String   @default("#94a3b8")
+  createdAt DateTime @default(now())
+
+  deals     Deal[]
+
+  @@unique([order])
+}
+
+model Deal {
+  id        String        @id @default(cuid())
+  title     String
+  value     Float         @default(0)
+  order     Int           @default(0)
+  contactId String
+  contact   Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  stageId   String
+  stage     PipelineStage @relation(fields: [stageId], references: [id])
+  ownerId   String
+  owner     User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  tasks     Task[]
+  quotes    Quote[]
+
+  @@index([stageId])
+  @@index([ownerId])
+  @@index([contactId])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  done        Boolean   @default(false)
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  dealId      String?
+  deal        Deal?     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([ownerId])
+  @@index([dealId])
+  @@index([contactId])
+}
+
+// --- Orçamentos -------------------------------------------------------
+// Modelagem inicial (placeholder) enquanto detalhamos a planilha de
+// cálculo atual do cliente. Campos de cálculo (margem, impostos, etc.)
+// serão ajustados assim que a lógica exata da planilha for confirmada.
+
+model Quote {
+  id          String       @id @default(cuid())
+  number      Int          @default(autoincrement())
+  type        QuoteType
+  status      QuoteStatus  @default(DRAFT)
+  title       String
+  validUntil  DateTime?
+  notes       String?
+
+  contactId   String
+  contact     Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  dealId      String?
+  deal        Deal?        @relation(fields: [dealId], references: [id])
+  ownerId     String
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  marginPct   Float        @default(0) // margem/lucro aplicada sobre o custo
+  taxPct      Float        @default(0) // impostos aplicados sobre o total
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  items       QuoteItem[]
+
+  @@index([contactId])
+  @@index([ownerId])
+  @@index([dealId])
+}
+
+model QuoteItem {
+  id          String            @id @default(cuid())
+  quoteId     String
+  quote       Quote             @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  category    QuoteItemCategory
+  description String
+  quantity    Float             @default(1)
+  unitCost    Float             @default(0) // custo unitário (interno)
+  unit        String            @default("un")
+  order       Int               @default(0)
+
+  @@index([quoteId])
+}
