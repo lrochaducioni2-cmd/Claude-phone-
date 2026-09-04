@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRM
 
-## Getting Started
+Sistema de CRM (Customer Relationship Management) para gestão de contatos/leads,
+pipeline de vendas, tarefas de follow-up e (em breve) orçamentos.
 
-First, run the development server:
+## Stack
+
+- [Next.js 16](https://nextjs.org) (App Router, TypeScript, Tailwind CSS)
+- [Prisma 7](https://www.prisma.io) + PostgreSQL
+- [NextAuth.js v4](https://next-auth.js.org) (login por e-mail/senha)
+- [@react-pdf/renderer](https://react-pdf.org) (geração de PDF dos orçamentos)
+
+## Funcionalidades
+
+- **Autenticação**: cadastro e login por e-mail/senha.
+- **Contatos**: cadastro de empresas/leads (nome, empresa, e-mail, telefone, status, observações).
+- **Pipeline de vendas**: kanban com estágios configuráveis, arraste os negócios entre colunas.
+- **Tarefas**: follow-ups com data de vencimento, vinculados a um contato.
+- **Orçamentos** *(em desenvolvimento)*: geração de orçamento em PDF para os serviços
+  (Estudo de Classificação Diária, Projeto, Consultoria, Inspeção Inicial, Inspeção Apurada,
+  Instalação e Treinamentos), com cálculo de mão de obra (H&H), materiais, despesas
+  (incluindo política de viagem a partir de Criciúma/SC), margem e impostos.
+
+## Rodando localmente
+
+### 1. Pré-requisitos
+
+- Node.js 20+
+- Docker (para o PostgreSQL local) — ou um Postgres já rodando em outro lugar
+
+### 2. Instalar dependências
+
+```bash
+npm install
+```
+
+### 3. Subir o banco de dados
+
+```bash
+docker compose up -d
+```
+
+Isso sobe um Postgres local em `localhost:5432` (usuário/senha/banco: `crm`).
+
+### 4. Configurar variáveis de ambiente
+
+```bash
+cp .env.example .env
+```
+
+Gere um valor para `NEXTAUTH_SECRET`:
+
+```bash
+openssl rand -base64 32
+```
+
+### 5. Rodar as migrations e popular dados iniciais
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+O seed cria os estágios padrão do pipeline e um usuário de teste:
+
+- **E-mail:** `demo@crm.local`
+- **Senha:** `demo1234`
+
+### 6. Iniciar o servidor de desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts úteis
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando              | Descrição                                          |
+| --------------------- | --------------------------------------------------- |
+| `npm run dev`         | Servidor de desenvolvimento                          |
+| `npm run build`       | Build de produção                                    |
+| `npm run lint`        | Lint (ESLint)                                        |
+| `npm run db:migrate`  | Aplica migrations do Prisma                          |
+| `npm run db:seed`     | Popula estágios do pipeline + usuário demo           |
+| `npm run db:studio`   | Abre o Prisma Studio (explorar/editar dados)         |
 
-## Learn More
+## Notas técnicas
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Prisma 7**: a URL do banco não fica mais em `schema.prisma` — está em `prisma.config.ts`
+  (usado pela CLI) e em `src/lib/prisma.ts` (usado em runtime via driver adapter `@prisma/adapter-pg`).
+- **Next.js 16**: o arquivo `middleware.ts` foi renomeado para `src/proxy.ts` (mesma função,
+  usado aqui para proteger as rotas autenticadas via NextAuth).
+- Antes de rodar `npx tsc --noEmit` isoladamente (fora de `next dev`/`next build`), rode
+  `npx next typegen` para gerar os tipos de rota (`PageProps`, `LayoutProps`).
