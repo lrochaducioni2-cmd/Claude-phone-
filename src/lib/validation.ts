@@ -20,3 +20,16 @@ export const contactSchema = z.object({
 });
 
 export type ContactInput = z.infer<typeof contactSchema>;
+
+export const dealSchema = z.object({
+  title: z.string().trim().min(2, "Título deve ter pelo menos 2 caracteres."),
+  value: z.coerce.number().min(0, "Valor não pode ser negativo.").default(0),
+  contactId: z.string().min(1, "Selecione um contato."),
+  stageId: z.string().min(1, "Selecione um estágio."),
+});
+
+export type DealInput = z.infer<typeof dealSchema>;
+
+export const dealUpdateSchema = dealSchema.partial().extend({
+  order: z.coerce.number().int().optional(),
+});
