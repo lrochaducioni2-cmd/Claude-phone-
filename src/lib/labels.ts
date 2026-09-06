@@ -13,3 +13,14 @@ export const LEAD_STATUS_COLORS: Record<string, string> = {
   CUSTOMER: "bg-green-100 text-green-700",
   LOST: "bg-red-100 text-red-700",
 };
+
+export const INSPECTION_ACCESS_MODE_LABELS: Record<string, string> = {
+  NIVEL_SOLO: "Nível do solo",
+  COM_ESCADAS: "Com escadas",
+};
+
+export const INSPECTION_LEVEL_LABELS: Record<string, string> = {
+  VISUAL: "Visual (Inicial)",
+  APURADA: "Apurada",
+  DETALHADA: "Detalhada",
+};

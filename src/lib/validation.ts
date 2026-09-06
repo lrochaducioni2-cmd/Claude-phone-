@@ -49,11 +49,32 @@ export const travelPolicySchema = z.object({
   originCity: z.string().trim().min(1, "Informe a cidade de origem."),
   dailyHotelRate: z.coerce.number().min(0).default(0),
   dailyMealRate: z.coerce.number().min(0).default(0),
-  kmRate: z.coerce.number().min(0).default(0),
+  defaultTravelDays: z.coerce.number().min(0).default(1),
+  fuelPricePerLiter: z.coerce.number().min(0).default(0),
+  vehicleConsumptionKmPerLiter: z.coerce.number().min(0.01, "Consumo deve ser maior que zero.").default(10),
   flightTicketDefault: z.coerce.number().min(0).default(0),
   rentalCarDailyRate: z.coerce.number().min(0).default(0),
-  fuelDefault: z.coerce.number().min(0).default(0),
   parkingDefault: z.coerce.number().min(0).default(0),
 });
 
 export type TravelPolicyInput = z.infer<typeof travelPolicySchema>;
+
+export const laborRateSchema = z.object({
+  code: z.string().trim().optional().or(z.literal("")),
+  name: z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres."),
+  hourlyCost: z.coerce.number().min(0, "Custo-hora não pode ser negativo."),
+  active: z.boolean().default(true),
+});
+
+export type LaborRateInput = z.infer<typeof laborRateSchema>;
+
+export const inspectionAccessModeValues = ["NIVEL_SOLO", "COM_ESCADAS"] as const;
+export const inspectionLevelValues = ["VISUAL", "APURADA", "DETALHADA"] as const;
+
+export const inspectionTimeStandardSchema = z.object({
+  accessMode: z.enum(inspectionAccessModeValues),
+  inspectionLevel: z.enum(inspectionLevelValues),
+  minutesPerUnit: z.coerce.number().min(0, "Minutos não pode ser negativo."),
+});
+
+export type InspectionTimeStandardInput = z.infer<typeof inspectionTimeStandardSchema>;

@@ -23,7 +23,19 @@ enum QuoteType {
   CONSULTORIA
   INSPECAO_INICIAL
   INSPECAO_APURADA
+  INSPECAO_DETALHADA
   INSTALACAO_TREINAMENTO
+}
+
+enum InspectionAccessMode {
+  NIVEL_SOLO
+  COM_ESCADAS
+}
+
+enum InspectionLevel {
+  VISUAL
+  APURADA
+  DETALHADA
 }
 
 enum QuoteStatus {
@@ -42,18 +54,20 @@ enum QuoteItemCategory {
 }
 
 model User {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  email     String    @unique
+  email     String   @unique
   password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  contacts     Contact[]
-  deals        Deal[]
-  tasks        Task[]
-  quotes       Quote[]
-  travelPolicy TravelPolicy?
+  contacts                Contact[]
+  deals                   Deal[]
+  tasks                   Task[]
+  quotes                  Quote[]
+  travelPolicy            TravelPolicy?
+  laborRates              LaborRate[]
+  inspectionTimeStandards InspectionTimeStandard[]
 }
 
 model Contact {
@@ -69,9 +83,9 @@ model Contact {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  deals     Deal[]
-  tasks     Task[]
-  quotes    Quote[]
+  deals  Deal[]
+  tasks  Task[]
+  quotes Quote[]
 
   @@index([ownerId])
 }
@@ -83,7 +97,7 @@ model PipelineStage {
   color     String   @default("#94a3b8")
   createdAt DateTime @default(now())
 
-  deals     Deal[]
+  deals Deal[]
 
   @@unique([order])
 }
@@ -102,8 +116,8 @@ model Deal {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
-  tasks     Task[]
-  quotes    Quote[]
+  tasks  Task[]
+  quotes Quote[]
 
   @@index([stageId])
   @@index([ownerId])
@@ -131,33 +145,46 @@ model Task {
 }
 
 // --- Orçamentos -------------------------------------------------------
-// Modelagem inicial (placeholder) enquanto detalhamos a planilha de
-// cálculo atual do cliente. Campos de cálculo (margem, impostos, etc.)
-// serão ajustados assim que a lógica exata da planilha for confirmada.
+// Motor de cálculo validado contra a planilha "Cálculo de Custos e
+// Despesas" (2026-09-06). Duas "blocos" de custo, cada um com sua
+// própria margem:
+//   - Mão de obra: subtotal = Σ(horas × custo-hora do cargo)
+//   - Despesas:    subtotal = Σ(quantidade × custo unitário do item)
+// Cada bloco vira preço de venda como subtotal / (1 - margem do bloco),
+// e o ISS incide sobre os dois blocos já com margem:
+//   blocoComImposto = (subtotal / (1 - margem)) * (1 + issPct)
+// Total da proposta = mão de obra c/ imposto + despesas c/ imposto.
 
 model Quote {
-  id          String       @id @default(cuid())
-  number      Int          @default(autoincrement())
-  type        QuoteType
-  status      QuoteStatus  @default(DRAFT)
-  title       String
-  validUntil  DateTime?
-  notes       String?
+  id         String      @id @default(cuid())
+  number     Int         @default(autoincrement())
+  type       QuoteType
+  status     QuoteStatus @default(DRAFT)
+  title      String
+  validUntil DateTime?
+  notes      String?
 
-  contactId   String
-  contact     Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  dealId      String?
-  deal        Deal?        @relation(fields: [dealId], references: [id])
-  ownerId     String
-  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  dealId    String?
+  deal      Deal?   @relation(fields: [dealId], references: [id])
+  ownerId   String
+  owner     User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  marginPct   Float        @default(0) // margem/lucro aplicada sobre o custo
-  taxPct      Float        @default(0) // impostos aplicados sobre o total
+  laborMarginPct   Float @default(0.5) // margem sobre mão de obra (editável por orçamento)
+  expenseMarginPct Float @default(0.3) // margem sobre despesas (editável por orçamento)
+  issPct           Float @default(0.07) // ISS, incide sobre mão de obra E despesas
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  // Dias de campo (calculado ou informado) + dias de deslocamento (ida/volta,
+  // padrão 1) — usados para multiplicar diárias de hospedagem/alimentação/
+  // carro alugado nos itens de despesa.
+  fieldDays  Float @default(0)
+  travelDays Float @default(1)
 
-  items       QuoteItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items QuoteItem[]
 
   @@index([contactId])
   @@index([ownerId])
@@ -170,30 +197,73 @@ model Quote {
 // quais componentes usar (podem ser combinados, ex.: avião + carro alugado
 // no destino + combustível + estacionamento), cada um puxando o valor
 // padrão daqui, editável por orçamento quando necessário.
+//
+// Combustível: calculado por km rodado real, não por "tanque cheio" —
+// custo = (km rodado ÷ consumo em km/L) × preço do litro.
 
 model TravelPolicy {
-  id        String   @id @default(cuid())
-  ownerId   String   @unique
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  ownerId String @unique
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  originCity        String @default("Criciúma/SC")
+  originCity String @default("Criciúma/SC")
 
   // Diária (padrão único, não varia por cidade)
-  dailyHotelRate    Float  @default(0) // R$/dia
-  dailyMealRate     Float  @default(0) // R$/dia
+  dailyHotelRate Float @default(0) // R$/dia
+  dailyMealRate  Float @default(0) // R$/dia
 
-  // Carro próprio
-  kmRate            Float  @default(0) // R$/km rodado (ida e volta)
+  // Dias de deslocamento padrão (ida + volta) somados aos dias de campo
+  // para multiplicar as diárias acima. Editável por orçamento.
+  defaultTravelDays Float @default(1)
+
+  // Combustível (carro próprio ou alugado), calculado por km rodado
+  fuelPricePerLiter            Float @default(0) // R$/litro
+  vehicleConsumptionKmPerLiter Float @default(10) // km/L (ex.: 10 km/L)
 
   // Avião
   flightTicketDefault Float @default(0) // R$, valor de referência (editável por orçamento)
 
   // Carro alugado no destino (pode ser combinado com avião)
-  rentalCarDailyRate  Float @default(0) // R$/dia
-  fuelDefault         Float @default(0) // R$, valor de referência de combustível
-  parkingDefault      Float @default(0) // R$, valor de referência de estacionamento
+  rentalCarDailyRate Float @default(0) // R$/dia
+  parkingDefault     Float @default(0) // R$, valor de referência de estacionamento
 
   updatedAt DateTime @updatedAt
+}
+
+// --- Tabela de Cargos (HH) -----------------------------------------------
+// Custo-hora por cargo/atividade, extensível (novos serviços como
+// Instalação usam profissionais adicionais). Preço de venda de cada
+// hora é calculado no orçamento como custo-hora / (1 - margem mão de obra).
+
+model LaborRate {
+  id         String   @id @default(cuid())
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  code       String? // código interno opcional (ex.: 102166)
+  name       String // ex.: "HH de campo", "HH de escritório", "HH desenhos em CAD"
+  hourlyCost Float    @default(0) // R$/hora (custo, sem margem)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+// --- Tempo padrão de Inspeção ---------------------------------------------
+// Minutos por equipamento, por combinação de modo de acesso × nível de
+// inspeção. Alimenta a calculadora de horas de campo dos orçamentos do
+// tipo Inspeção: o usuário só informa a quantidade de equipamentos.
+
+model InspectionTimeStandard {
+  id              String               @id @default(cuid())
+  ownerId         String
+  owner           User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  accessMode      InspectionAccessMode
+  inspectionLevel InspectionLevel
+  minutesPerUnit  Float                @default(0)
+  updatedAt       DateTime             @updatedAt
+
+  @@unique([ownerId, accessMode, inspectionLevel])
 }
 
 model QuoteItem {

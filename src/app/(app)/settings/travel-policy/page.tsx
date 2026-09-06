@@ -26,10 +26,11 @@ export default async function TravelPolicyPage() {
           originCity: policy?.originCity ?? "Criciúma/SC",
           dailyHotelRate: String(policy?.dailyHotelRate ?? 0),
           dailyMealRate: String(policy?.dailyMealRate ?? 0),
-          kmRate: String(policy?.kmRate ?? 0),
+          defaultTravelDays: String(policy?.defaultTravelDays ?? 1),
+          fuelPricePerLiter: String(policy?.fuelPricePerLiter ?? 0),
+          vehicleConsumptionKmPerLiter: String(policy?.vehicleConsumptionKmPerLiter ?? 10),
           flightTicketDefault: String(policy?.flightTicketDefault ?? 0),
           rentalCarDailyRate: String(policy?.rentalCarDailyRate ?? 0),
-          fuelDefault: String(policy?.fuelDefault ?? 0),
           parkingDefault: String(policy?.parkingDefault ?? 0),
         }}
       />

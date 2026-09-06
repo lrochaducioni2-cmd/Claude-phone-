@@ -6,20 +6,30 @@ type PolicyValues = {
   originCity: string;
   dailyHotelRate: string;
   dailyMealRate: string;
-  kmRate: string;
+  defaultTravelDays: string;
+  fuelPricePerLiter: string;
+  vehicleConsumptionKmPerLiter: string;
   flightTicketDefault: string;
   rentalCarDailyRate: string;
-  fuelDefault: string;
   parkingDefault: string;
 };
 
 const FIELDS: { key: keyof PolicyValues; label: string; hint?: string }[] = [
   { key: "dailyHotelRate", label: "Diária de hotel (R$/dia)" },
   { key: "dailyMealRate", label: "Diária de alimentação (R$/dia)" },
-  { key: "kmRate", label: "Carro próprio (R$/km rodado)" },
+  {
+    key: "defaultTravelDays",
+    label: "Dias de deslocamento (ida/volta)",
+    hint: "Somado aos dias de campo para calcular as diárias",
+  },
+  { key: "fuelPricePerLiter", label: "Combustível (R$/litro)" },
+  {
+    key: "vehicleConsumptionKmPerLiter",
+    label: "Consumo do veículo (km/litro)",
+    hint: "Custo de combustível = km rodado ÷ consumo × preço/litro",
+  },
   { key: "flightTicketDefault", label: "Passagem aérea (R$, valor de referência)", hint: "Editável em cada orçamento" },
   { key: "rentalCarDailyRate", label: "Carro alugado no destino (R$/dia)" },
-  { key: "fuelDefault", label: "Combustível (R$, valor de referência)", hint: "Para carro alugado" },
   { key: "parkingDefault", label: "Estacionamento (R$, valor de referência)" },
 ];
 
