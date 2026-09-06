@@ -75,6 +75,43 @@ export function calculateQuoteTotals({
   };
 }
 
+// --- Ponte com QuoteItem persistido -------------------------------------
+//
+// Categorias de item: MAO_DE_OBRA vai para o bloco de mão de obra; DESPESA,
+// MATERIAL e OUTROS entram todos no bloco de despesas (mesma margem/ISS).
+// A planilha original só tinha "mão de obra" e "despesas" — Material e
+// Outros são uma extensão nossa; até o cliente definir uma margem própria
+// para material, tratamos como despesa.
+
+export type QuoteItemLike = {
+  category: string;
+  quantity: number;
+  unitCost: number;
+};
+
+export function computeQuoteTotalsFromItems(
+  items: QuoteItemLike[],
+  margins: {
+    laborMarginPct: number;
+    expenseMarginPct: number;
+    issPct: number;
+  },
+): QuoteCalculationResult {
+  const laborLines: LaborLine[] = items
+    .filter((item) => item.category === "MAO_DE_OBRA")
+    .map((item) => ({ hours: item.quantity, hourlyCost: item.unitCost }));
+
+  const expenseLines: ExpenseLine[] = items
+    .filter((item) => item.category !== "MAO_DE_OBRA")
+    .map((item) => ({ quantity: item.quantity, unitCost: item.unitCost }));
+
+  return calculateQuoteTotals({
+    laborLines,
+    expenseLines,
+    ...margins,
+  });
+}
+
 // --- Despesa de deslocamento -------------------------------------------
 
 /** Custo de combustível por km rodado real (não mais "tanque cheio"). */

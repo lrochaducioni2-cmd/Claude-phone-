@@ -48,7 +48,8 @@ export type TaskInput = z.infer<typeof taskSchema>;
 export const travelPolicySchema = z.object({
   originCity: z.string().trim().min(1, "Informe a cidade de origem."),
   dailyHotelRate: z.coerce.number().min(0).default(0),
-  dailyMealRate: z.coerce.number().min(0).default(0),
+  lunchRate: z.coerce.number().min(0).default(0),
+  dinnerRate: z.coerce.number().min(0).default(0),
   defaultTravelDays: z.coerce.number().min(0).default(1),
   fuelPricePerLiter: z.coerce.number().min(0).default(0),
   vehicleConsumptionKmPerLiter: z.coerce.number().min(0.01, "Consumo deve ser maior que zero.").default(10),
@@ -78,3 +79,47 @@ export const inspectionTimeStandardSchema = z.object({
 });
 
 export type InspectionTimeStandardInput = z.infer<typeof inspectionTimeStandardSchema>;
+
+export const quoteTypeValues = [
+  "ESTUDO_CLASSIFICACAO_DIARIA",
+  "PROJETO",
+  "CONSULTORIA",
+  "INSPECAO_INICIAL",
+  "INSPECAO_APURADA",
+  "INSPECAO_DETALHADA",
+  "INSTALACAO_TREINAMENTO",
+] as const;
+
+export const quoteStatusValues = ["DRAFT", "SENT", "APPROVED", "REJECTED", "EXPIRED"] as const;
+
+export const quoteItemCategoryValues = ["MAO_DE_OBRA", "MATERIAL", "DESPESA", "OUTROS"] as const;
+
+export const quoteItemSchema = z.object({
+  category: z.enum(quoteItemCategoryValues),
+  description: z.string().trim().min(1, "Descrição obrigatória."),
+  quantity: z.coerce.number().min(0, "Quantidade não pode ser negativa."),
+  unitCost: z.coerce.number().min(0, "Valor não pode ser negativo."),
+  unit: z.string().trim().optional().or(z.literal("")),
+});
+
+export type QuoteItemInput = z.infer<typeof quoteItemSchema>;
+
+export const quoteSchema = z.object({
+  type: z.enum(quoteTypeValues),
+  status: z.enum(quoteStatusValues).default("DRAFT"),
+  title: z.string().trim().min(2, "Título deve ter pelo menos 2 caracteres."),
+  contactId: z.string().min(1, "Selecione um contato."),
+  dealId: z.string().trim().optional().or(z.literal("")),
+  validUntil: z.string().trim().optional().or(z.literal("")),
+  notes: z.string().trim().optional().or(z.literal("")),
+  laborMarginPct: z.coerce.number().min(0).max(0.99),
+  expenseMarginPct: z.coerce.number().min(0).max(0.99),
+  issPct: z.coerce.number().min(0).max(1),
+  fieldDays: z.coerce.number().min(0),
+  travelDays: z.coerce.number().min(0),
+  items: z.array(quoteItemSchema).default([]),
+});
+
+export type QuoteInput = z.infer<typeof quoteSchema>;
+
+export const quoteUpdateSchema = quoteSchema.partial();

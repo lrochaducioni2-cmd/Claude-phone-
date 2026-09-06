@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "TravelPolicy" DROP COLUMN "dailyMealRate",
+ADD COLUMN     "dinnerRate" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "lunchRate" DOUBLE PRECISION NOT NULL DEFAULT 0;
+

@@ -210,7 +210,8 @@ model TravelPolicy {
 
   // Diária (padrão único, não varia por cidade)
   dailyHotelRate Float @default(0) // R$/dia
-  dailyMealRate  Float @default(0) // R$/dia
+  lunchRate      Float @default(0) // R$/almoço
+  dinnerRate     Float @default(0) // R$/janta
 
   // Dias de deslocamento padrão (ida + volta) somados aos dias de campo
   // para multiplicar as diárias acima. Editável por orçamento.

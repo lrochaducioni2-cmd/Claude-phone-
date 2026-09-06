@@ -25,7 +25,8 @@ export default async function TravelPolicyPage() {
         initialValues={{
           originCity: policy?.originCity ?? "Criciúma/SC",
           dailyHotelRate: String(policy?.dailyHotelRate ?? 0),
-          dailyMealRate: String(policy?.dailyMealRate ?? 0),
+          lunchRate: String(policy?.lunchRate ?? 0),
+          dinnerRate: String(policy?.dinnerRate ?? 0),
           defaultTravelDays: String(policy?.defaultTravelDays ?? 1),
           fuelPricePerLiter: String(policy?.fuelPricePerLiter ?? 0),
           vehicleConsumptionKmPerLiter: String(policy?.vehicleConsumptionKmPerLiter ?? 10),

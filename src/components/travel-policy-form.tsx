@@ -5,7 +5,8 @@ import { useState } from "react";
 type PolicyValues = {
   originCity: string;
   dailyHotelRate: string;
-  dailyMealRate: string;
+  lunchRate: string;
+  dinnerRate: string;
   defaultTravelDays: string;
   fuelPricePerLiter: string;
   vehicleConsumptionKmPerLiter: string;
@@ -16,7 +17,8 @@ type PolicyValues = {
 
 const FIELDS: { key: keyof PolicyValues; label: string; hint?: string }[] = [
   { key: "dailyHotelRate", label: "Diária de hotel (R$/dia)" },
-  { key: "dailyMealRate", label: "Diária de alimentação (R$/dia)" },
+  { key: "lunchRate", label: "Almoço (R$)" },
+  { key: "dinnerRate", label: "Janta (R$)" },
   {
     key: "defaultTravelDays",
     label: "Dias de deslocamento (ida/volta)",
