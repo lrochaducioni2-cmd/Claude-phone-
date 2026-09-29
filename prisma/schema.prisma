@@ -68,6 +68,8 @@ model User {
   travelPolicy            TravelPolicy?
   laborRates              LaborRate[]
   inspectionTimeStandards InspectionTimeStandard[]
+  exFacilities            ExFacility[]
+  exInspections           ExInspection[]
 }
 
 model Contact {
@@ -83,9 +85,10 @@ model Contact {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  deals  Deal[]
-  tasks  Task[]
-  quotes Quote[]
+  deals        Deal[]
+  tasks        Task[]
+  quotes       Quote[]
+  exFacilities ExFacility[]
 
   @@index([ownerId])
 }
@@ -184,7 +187,8 @@ model Quote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items QuoteItem[]
+  items         QuoteItem[]
+  exInspections ExInspection[]
 
   @@index([contactId])
   @@index([ownerId])
@@ -279,4 +283,202 @@ model QuoteItem {
   order       Int               @default(0)
 
   @@index([quoteId])
+}
+
+// --- Inspeção Ex (atmosferas explosivas) ----------------------------------
+// Módulo de execução das inspeções conforme ABNT NBR IEC 60079-17:
+//   Instalação (planta do cliente) → Áreas classificadas → Equipamentos Ex
+//   Inspeção (Visual/Apurada/Detalhada) → um item por equipamento, com o
+//   checklist aplicável aos tipos de proteção do equipamento e ao nível
+//   de inspeção (ver src/lib/ex-checklist.ts).
+
+enum ExAtmosphere {
+  GAS
+  POEIRA
+}
+
+enum ExZone {
+  ZONA_0
+  ZONA_1
+  ZONA_2
+  ZONA_20
+  ZONA_21
+  ZONA_22
+}
+
+// "II" / "III" = equipamento sem subdivisão (aceito em qualquer subgrupo).
+enum ExGroup {
+  II
+  IIA
+  IIB
+  IIC
+  III
+  IIIA
+  IIIB
+  IIIC
+}
+
+enum ExTemperatureClass {
+  T1
+  T2
+  T3
+  T4
+  T5
+  T6
+}
+
+enum ExEpl {
+  Ga
+  Gb
+  Gc
+  Da
+  Db
+  Dc
+}
+
+// Tipos de proteção (conceitos) — d: à prova de explosão, e: segurança
+// aumentada, i: segurança intrínseca, n: não acendível, p: pressurizado,
+// m: encapsulado, o: imerso em líquido, q: imerso em areia, t: proteção
+// por invólucro (poeira), s: proteção especial.
+enum ExProtectionType {
+  D
+  E
+  I
+  N
+  P
+  M
+  O
+  Q
+  T
+  S
+}
+
+enum ExInspectionType {
+  INICIAL
+  PERIODICA
+  AMOSTRAGEM
+}
+
+enum ExInspectionStatus {
+  EM_ANDAMENTO
+  CONCLUIDA
+}
+
+enum ExItemResult {
+  PENDENTE
+  CONFORME
+  NAO_CONFORME
+}
+
+model ExFacility {
+  id        String   @id @default(cuid())
+  name      String
+  location  String?
+  notes     String?
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  areas       ExArea[]
+  inspections ExInspection[]
+
+  @@index([ownerId])
+  @@index([contactId])
+}
+
+model ExArea {
+  id               String              @id @default(cuid())
+  facilityId       String
+  facility         ExFacility          @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  name             String
+  atmosphere       ExAtmosphere        @default(GAS)
+  zone             ExZone
+  group            ExGroup? // grupo de gás/poeira exigido pela área
+  temperatureClass ExTemperatureClass? // classe de temperatura exigida (gás)
+  maxSurfaceTempC  Float? // temperatura máxima de superfície admissível (poeira), °C
+  notes            String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  equipment ExEquipment[]
+
+  @@index([facilityId])
+}
+
+model ExEquipment {
+  id                String              @id @default(cuid())
+  areaId            String
+  area              ExArea              @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  tag               String
+  description       String
+  manufacturer      String?
+  model             String?
+  serialNumber      String?
+  marking           String? // marcação completa, ex.: "Ex db IIC T4 Gb"
+  protectionTypes   ExProtectionType[]
+  group             ExGroup?
+  temperatureClass  ExTemperatureClass?
+  maxSurfaceTempC   Float? // poeira, °C
+  epl               ExEpl?
+  ipRating          String?
+  certificateNumber String?
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  inspectionItems ExInspectionItem[]
+
+  @@index([areaId])
+}
+
+model ExInspection {
+  id            String             @id @default(cuid())
+  number        Int                @default(autoincrement())
+  facilityId    String
+  facility      ExFacility         @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  level         InspectionLevel
+  type          ExInspectionType   @default(PERIODICA)
+  status        ExInspectionStatus @default(EM_ANDAMENTO)
+  inspectorName String?
+  date          DateTime           @default(now())
+  notes         String?
+  quoteId       String?
+  quote         Quote?             @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  ownerId       String
+  owner         User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  items ExInspectionItem[]
+
+  @@index([facilityId])
+  @@index([ownerId])
+  @@index([quoteId])
+}
+
+// Um item por equipamento inspecionado. Guarda um "retrato" do equipamento
+// (TAG, área, tipos de proteção) para que o histórico da inspeção continue
+// legível mesmo se o cadastro do equipamento mudar ou for excluído.
+model ExInspectionItem {
+  id              String             @id @default(cuid())
+  inspectionId    String
+  inspection      ExInspection       @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  equipmentId     String?
+  equipment       ExEquipment?       @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  equipmentTag    String
+  equipmentDesc   String
+  areaName        String
+  protectionTypes ExProtectionType[]
+  // Respostas do checklist: { [checkId]: "C" | "NC" | "NA" }
+  answers         Json               @default("{}")
+  result          ExItemResult       @default(PENDENTE)
+  notes           String?
+  order           Int                @default(0)
+  updatedAt       DateTime           @updatedAt
+
+  @@unique([inspectionId, equipmentId])
+  @@index([inspectionId])
 }

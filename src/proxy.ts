@@ -12,5 +12,6 @@ export const config = {
     "/tasks/:path*",
     "/quotes/:path*",
     "/settings/:path*",
+    "/ex/:path*",
   ],
 };

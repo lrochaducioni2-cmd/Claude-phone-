@@ -70,3 +70,86 @@ export const QUOTE_TYPE_TO_INSPECTION_LEVEL: Record<string, string> = {
 export function isInspectionQuoteType(type: string): boolean {
   return INSPECTION_QUOTE_TYPES.has(type);
 }
+
+// --- Inspeção Ex ---------------------------------------------------------
+
+export const EX_ATMOSPHERE_LABELS: Record<string, string> = {
+  GAS: "Gás",
+  POEIRA: "Poeira",
+};
+
+export const EX_ZONE_LABELS: Record<string, string> = {
+  ZONA_0: "Zona 0",
+  ZONA_1: "Zona 1",
+  ZONA_2: "Zona 2",
+  ZONA_20: "Zona 20",
+  ZONA_21: "Zona 21",
+  ZONA_22: "Zona 22",
+};
+
+export const EX_ZONES_BY_ATMOSPHERE: Record<string, string[]> = {
+  GAS: ["ZONA_0", "ZONA_1", "ZONA_2"],
+  POEIRA: ["ZONA_20", "ZONA_21", "ZONA_22"],
+};
+
+export const EX_GROUPS_BY_ATMOSPHERE: Record<string, string[]> = {
+  GAS: ["II", "IIA", "IIB", "IIC"],
+  POEIRA: ["III", "IIIA", "IIIB", "IIIC"],
+};
+
+export const EX_GROUP_VALUES = ["II", "IIA", "IIB", "IIC", "III", "IIIA", "IIIB", "IIIC"];
+export const EX_TEMPERATURE_CLASS_VALUES = ["T1", "T2", "T3", "T4", "T5", "T6"];
+export const EX_EPL_VALUES = ["Ga", "Gb", "Gc", "Da", "Db", "Dc"];
+
+export const EX_PROTECTION_TYPE_LABELS: Record<string, string> = {
+  D: "Ex d — À prova de explosão",
+  E: "Ex e — Segurança aumentada",
+  I: "Ex i — Segurança intrínseca",
+  N: "Ex n — Não acendível",
+  P: "Ex p — Pressurizado",
+  M: "Ex m — Encapsulado",
+  O: "Ex o — Imerso em líquido",
+  Q: "Ex q — Imerso em areia",
+  T: "Ex t — Proteção por invólucro (poeira)",
+  S: "Ex s — Proteção especial",
+};
+
+/** "D,E" → "Ex d e" */
+export function formatProtectionTypes(types: readonly string[]): string {
+  if (types.length === 0) return "—";
+  return `Ex ${types.map((t) => t.toLowerCase()).join(" ")}`;
+}
+
+export const EX_INSPECTION_TYPE_LABELS: Record<string, string> = {
+  INICIAL: "Inicial",
+  PERIODICA: "Periódica",
+  AMOSTRAGEM: "Por amostragem",
+};
+
+export const EX_INSPECTION_STATUS_LABELS: Record<string, string> = {
+  EM_ANDAMENTO: "Em andamento",
+  CONCLUIDA: "Concluída",
+};
+
+export const EX_INSPECTION_STATUS_COLORS: Record<string, string> = {
+  EM_ANDAMENTO: "bg-amber-100 text-amber-700",
+  CONCLUIDA: "bg-green-100 text-green-700",
+};
+
+export const EX_ITEM_RESULT_LABELS: Record<string, string> = {
+  PENDENTE: "Pendente",
+  CONFORME: "Conforme",
+  NAO_CONFORME: "Não conforme",
+};
+
+export const EX_ITEM_RESULT_COLORS: Record<string, string> = {
+  PENDENTE: "bg-slate-100 text-slate-700",
+  CONFORME: "bg-green-100 text-green-700",
+  NAO_CONFORME: "bg-red-100 text-red-700",
+};
+
+export const EX_CHECK_ANSWER_LABELS: Record<string, string> = {
+  C: "C",
+  NC: "NC",
+  NA: "N/A",
+};

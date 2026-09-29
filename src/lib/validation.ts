@@ -123,3 +123,106 @@ export const quoteSchema = z.object({
 export type QuoteInput = z.infer<typeof quoteSchema>;
 
 export const quoteUpdateSchema = quoteSchema.partial();
+
+// --- Inspeção Ex ---------------------------------------------------------
+
+export const exAtmosphereValues = ["GAS", "POEIRA"] as const;
+export const exZoneValues = ["ZONA_0", "ZONA_1", "ZONA_2", "ZONA_20", "ZONA_21", "ZONA_22"] as const;
+export const exGroupValues = ["II", "IIA", "IIB", "IIC", "III", "IIIA", "IIIB", "IIIC"] as const;
+export const exTemperatureClassValues = ["T1", "T2", "T3", "T4", "T5", "T6"] as const;
+export const exEplValues = ["Ga", "Gb", "Gc", "Da", "Db", "Dc"] as const;
+export const exProtectionTypeValues = ["D", "E", "I", "N", "P", "M", "O", "Q", "T", "S"] as const;
+export const exInspectionTypeValues = ["INICIAL", "PERIODICA", "AMOSTRAGEM"] as const;
+export const exInspectionStatusValues = ["EM_ANDAMENTO", "CONCLUIDA"] as const;
+export const exCheckAnswerValues = ["C", "NC", "NA"] as const;
+
+const optionalText = z.string().trim().optional().or(z.literal(""));
+const optionalNumber = z
+  .union([z.literal(""), z.null(), z.coerce.number()])
+  .optional()
+  .transform((v) => (v === "" || v === undefined ? null : v));
+
+export const exFacilitySchema = z.object({
+  name: z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres."),
+  location: optionalText,
+  notes: optionalText,
+  contactId: optionalText,
+});
+
+export type ExFacilityInput = z.infer<typeof exFacilitySchema>;
+
+const ZONES_BY_ATMOSPHERE: Record<(typeof exAtmosphereValues)[number], readonly string[]> = {
+  GAS: ["ZONA_0", "ZONA_1", "ZONA_2"],
+  POEIRA: ["ZONA_20", "ZONA_21", "ZONA_22"],
+};
+
+const exAreaBaseSchema = z.object({
+  facilityId: z.string().min(1, "Selecione a instalação."),
+  name: z.string().trim().min(1, "Informe o nome da área."),
+  atmosphere: z.enum(exAtmosphereValues).default("GAS"),
+  zone: z.enum(exZoneValues),
+  group: z.enum(exGroupValues).optional().or(z.literal("")),
+  temperatureClass: z.enum(exTemperatureClassValues).optional().or(z.literal("")),
+  maxSurfaceTempC: optionalNumber,
+  notes: optionalText,
+});
+
+export function isZoneValidForAtmosphere(atmosphere: string, zone: string): boolean {
+  return ZONES_BY_ATMOSPHERE[atmosphere as (typeof exAtmosphereValues)[number]]?.includes(zone) ?? false;
+}
+
+export const exAreaSchema = exAreaBaseSchema.refine(
+  (area) => isZoneValidForAtmosphere(area.atmosphere, area.zone),
+  { message: "Zona incompatível com o tipo de atmosfera.", path: ["zone"] },
+);
+
+export const exAreaUpdateSchema = exAreaBaseSchema.omit({ facilityId: true }).partial();
+
+export type ExAreaInput = z.infer<typeof exAreaSchema>;
+
+export const exEquipmentSchema = z.object({
+  areaId: z.string().min(1, "Selecione a área."),
+  tag: z.string().trim().min(1, "Informe a TAG."),
+  description: z.string().trim().min(1, "Informe a descrição."),
+  manufacturer: optionalText,
+  model: optionalText,
+  serialNumber: optionalText,
+  marking: optionalText,
+  protectionTypes: z.array(z.enum(exProtectionTypeValues)).default([]),
+  group: z.enum(exGroupValues).optional().or(z.literal("")),
+  temperatureClass: z.enum(exTemperatureClassValues).optional().or(z.literal("")),
+  maxSurfaceTempC: optionalNumber,
+  epl: z.enum(exEplValues).optional().or(z.literal("")),
+  ipRating: optionalText,
+  certificateNumber: optionalText,
+  notes: optionalText,
+});
+
+export type ExEquipmentInput = z.infer<typeof exEquipmentSchema>;
+
+export const exInspectionSchema = z.object({
+  facilityId: z.string().min(1, "Selecione a instalação."),
+  level: z.enum(inspectionLevelValues),
+  type: z.enum(exInspectionTypeValues).default("PERIODICA"),
+  inspectorName: optionalText,
+  date: optionalText,
+  notes: optionalText,
+  quoteId: optionalText,
+  // Áreas a incluir; vazio = todas as áreas da instalação.
+  areaIds: z.array(z.string()).default([]),
+});
+
+export type ExInspectionInput = z.infer<typeof exInspectionSchema>;
+
+export const exInspectionUpdateSchema = z.object({
+  status: z.enum(exInspectionStatusValues).optional(),
+  type: z.enum(exInspectionTypeValues).optional(),
+  inspectorName: optionalText,
+  date: optionalText,
+  notes: optionalText,
+});
+
+export const exInspectionItemUpdateSchema = z.object({
+  answers: z.record(z.string(), z.enum(exCheckAnswerValues)).optional(),
+  notes: optionalText,
+});

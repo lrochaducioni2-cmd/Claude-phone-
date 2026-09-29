@@ -20,6 +20,13 @@ pipeline de vendas, tarefas de follow-up e (em breve) orçamentos.
   (Estudo de Classificação Diária, Projeto, Consultoria, Inspeção Inicial, Inspeção Apurada,
   Instalação e Treinamentos), com cálculo de mão de obra (H&H), materiais, despesas
   (incluindo política de viagem a partir de Criciúma/SC), margem e impostos.
+- **Inspeção Ex** (ABNT NBR IEC 60079-17): cadastro de instalações do cliente, áreas
+  classificadas (gás/poeira, zona, grupo, classe de temperatura) e equipamentos Ex
+  (TAG, tipos de proteção, marcação, EPL, IP, certificado), com verificação automática
+  de adequação do equipamento à área (EPL × zona, grupo, classe T / temperatura de
+  superfície). Inspeções Visual/Apurada/Detalhada geram um checklist por equipamento
+  conforme o tipo de proteção (Tabelas 1, 2 e 3 da norma), com resultado
+  Conforme/Não conforme/Pendente e relatório imprimível (salvar como PDF pelo navegador).
 
 ## Rodando localmente
 
@@ -84,6 +91,7 @@ Acesse [http://localhost:3000](http://localhost:3000).
 | `npm run db:migrate`  | Aplica migrations do Prisma                          |
 | `npm run db:seed`     | Popula estágios do pipeline + usuário demo           |
 | `npm run db:studio`   | Abre o Prisma Studio (explorar/editar dados)         |
+| `npx tsx scripts/verify-ex-inspection.ts` | Verifica regras de adequação e checklist Ex |
 
 ## Notas técnicas
 

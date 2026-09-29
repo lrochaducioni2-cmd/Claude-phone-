@@ -10,13 +10,14 @@ const LINKS = [
   { href: "/pipeline", label: "Pipeline" },
   { href: "/tasks", label: "Tarefas" },
   { href: "/quotes", label: "Orçamentos" },
+  { href: "/ex", label: "Inspeção Ex" },
 ];
 
 export function NavBar({ userName }: { userName: string }) {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="border-b border-slate-200 bg-white print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <span className="text-lg font-semibold text-slate-900">CRM</span>
