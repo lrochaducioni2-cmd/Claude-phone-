@@ -32,6 +32,12 @@ Criar um protótipo navegável do CRM com link acessível, para o usuário testa
 (inclusive pelo celular).
 
 ## Projetos relacionados
-Está sendo avaliada a criação de uma extensão/serviço separado de
-**inspeção**, possivelmente em outro repositório ou sessão. Ainda a definir
-se será um módulo dentro deste mesmo repositório ou um projeto independente.
+Existe um segundo software, maior que este CRM, para **execução do serviço
+de inspeção**. Será desenvolvido em uma sessão/repositório separado (projeto
+maior). Os dois sistemas vão se comunicar via API: o CRM cadastra empresa e
+fecha a venda; o software de inspeção puxa esses dados para executar o
+trabalho e devolve o status de entrega ao CRM.
+
+O contrato dessa integração (entidades, endpoints, fluxo de status) está
+detalhado em [`INTEGRACAO.md`](./INTEGRACAO.md) — leia esse arquivo antes de
+implementar a API do CRM ou o consumo dela pelo software de inspeção.
