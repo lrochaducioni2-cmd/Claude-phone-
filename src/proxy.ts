@@ -13,5 +13,6 @@ export const config = {
     "/quotes/:path*",
     "/settings/:path*",
     "/ex/:path*",
+    "/trabalhos/:path*",
   ],
 };

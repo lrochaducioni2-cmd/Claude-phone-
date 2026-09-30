@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { facilityId, level, type, inspectorName, date, notes, quoteId, areaIds } = parsed.data;
+  const { facilityId, level, type, inspectorName, date, notes, trabalhoId, areaIds } = parsed.data;
 
   const facility = await prisma.exFacility.findFirst({
     where: { id: facilityId, ownerId: userId },
@@ -35,10 +35,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Instalação não encontrada." }, { status: 404 });
   }
 
-  if (quoteId) {
-    const quote = await prisma.quote.findFirst({ where: { id: quoteId, ownerId: userId } });
-    if (!quote) {
-      return NextResponse.json({ error: "Orçamento não encontrado." }, { status: 400 });
+  if (trabalhoId) {
+    const trabalho = await prisma.trabalho.findUnique({ where: { id: trabalhoId } });
+    if (!trabalho) {
+      return NextResponse.json({ error: "Trabalho não encontrado." }, { status: 400 });
+    }
+    if (trabalho.status !== "EM_EXECUCAO") {
+      return NextResponse.json({ error: "Só é possível vincular trabalhos em execução." }, { status: 400 });
+    }
+    if (facility.empresaId && trabalho.empresaId !== facility.empresaId) {
+      return NextResponse.json(
+        { error: "O trabalho é de outra empresa, não da empresa desta instalação." },
+        { status: 400 },
+      );
     }
   }
 
@@ -65,7 +74,7 @@ export async function POST(request: Request) {
       inspectorName: inspectorName || null,
       date: parsedDate,
       notes: notes || null,
-      quoteId: quoteId || null,
+      trabalhoId: trabalhoId || null,
       ownerId: userId,
       items: {
         create: equipment.map((eq, index) => ({

@@ -85,10 +85,9 @@ model Contact {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  deals        Deal[]
-  tasks        Task[]
-  quotes       Quote[]
-  exFacilities ExFacility[]
+  deals  Deal[]
+  tasks  Task[]
+  quotes Quote[]
 
   @@index([ownerId])
 }
@@ -187,8 +186,7 @@ model Quote {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items         QuoteItem[]
-  exInspections ExInspection[]
+  items QuoteItem[]
 
   @@index([contactId])
   @@index([ownerId])
@@ -375,8 +373,8 @@ model ExFacility {
   name      String
   location  String?
   notes     String?
-  contactId String?
-  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  empresaId String?
+  empresa   Empresa? @relation(fields: [empresaId], references: [id], onDelete: SetNull)
   ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -386,7 +384,7 @@ model ExFacility {
   inspections ExInspection[]
 
   @@index([ownerId])
-  @@index([contactId])
+  @@index([empresaId])
 }
 
 model ExArea {
@@ -445,8 +443,8 @@ model ExInspection {
   inspectorName String?
   date          DateTime           @default(now())
   notes         String?
-  quoteId       String?
-  quote         Quote?             @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  trabalhoId    String?
+  trabalho      Trabalho?          @relation(fields: [trabalhoId], references: [id], onDelete: SetNull)
   ownerId       String
   owner         User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt     DateTime           @default(now())
@@ -456,7 +454,7 @@ model ExInspection {
 
   @@index([facilityId])
   @@index([ownerId])
-  @@index([quoteId])
+  @@index([trabalhoId])
 }
 
 // Um item por equipamento inspecionado. Guarda um "retrato" do equipamento
@@ -481,4 +479,57 @@ model ExInspectionItem {
 
   @@unique([inspectionId, equipmentId])
   @@index([inspectionId])
+}
+
+// --- Integração com o CRM -------------------------------------------------
+// O CRM é a fonte da verdade de empresa e trabalho; os dois sistemas só se
+// comunicam por API (ver INTEGRACAO.md). Estes modelos são cópias locais
+// do que foi puxado da API do CRM, identificadas pelo id do CRM (crmId),
+// para que a inspeção funcione mesmo com o CRM fora do ar.
+
+enum TrabalhoStatus {
+  VENDIDO
+  EM_EXECUCAO
+  ENTREGUE
+  CANCELADO
+}
+
+model Empresa {
+  id                 String   @id @default(cuid())
+  crmId              String   @unique
+  razaoSocial        String
+  nomeFantasia       String?
+  cnpj               String?
+  endereco           String?
+  telefone           String?
+  email              String?
+  contatoResponsavel String?
+  syncedAt           DateTime @default(now())
+
+  trabalhos    Trabalho[]
+  exFacilities ExFacility[]
+}
+
+model Trabalho {
+  id              String         @id @default(cuid())
+  crmId           String         @unique
+  empresaId       String
+  empresa         Empresa        @relation(fields: [empresaId], references: [id])
+  descricaoEscopo String
+  valor           Float?
+  dataVenda       DateTime?
+  status          TrabalhoStatus @default(EM_EXECUCAO)
+  dataEntrega     DateTime?
+  linkRelatorio   String?
+  observacoes     String?
+  // Último status que o CRM confirmou ter recebido. Diferente de `status`
+  // = aviso pendente (o CRM estava fora do ar ou recusou) → reenviar.
+  crmStatus       TrabalhoStatus @default(VENDIDO)
+  crmSyncError    String?
+  importedAt      DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  exInspections ExInspection[]
+
+  @@index([empresaId])
 }

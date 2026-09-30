@@ -146,7 +146,7 @@ export const exFacilitySchema = z.object({
   name: z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres."),
   location: optionalText,
   notes: optionalText,
-  contactId: optionalText,
+  empresaId: optionalText,
 });
 
 export type ExFacilityInput = z.infer<typeof exFacilitySchema>;
@@ -207,7 +207,7 @@ export const exInspectionSchema = z.object({
   inspectorName: optionalText,
   date: optionalText,
   notes: optionalText,
-  quoteId: optionalText,
+  trabalhoId: optionalText,
   // Áreas a incluir; vazio = todas as áreas da instalação.
   areaIds: z.array(z.string()).default([]),
 });
@@ -225,4 +225,15 @@ export const exInspectionUpdateSchema = z.object({
 export const exInspectionItemUpdateSchema = z.object({
   answers: z.record(z.string(), z.enum(exCheckAnswerValues)).optional(),
   notes: optionalText,
+});
+
+// --- Trabalhos (integração com o CRM) -------------------------------------
+
+export const importTrabalhoSchema = z.object({
+  crmTrabalhoId: z.string().trim().min(1, "Informe o trabalho do CRM."),
+});
+
+export const deliverTrabalhoSchema = z.object({
+  dataEntrega: z.string().trim().min(1, "Informe a data de entrega."),
+  observacoes: optionalText,
 });

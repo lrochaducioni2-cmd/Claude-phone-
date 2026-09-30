@@ -32,12 +32,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, location, notes, contactId } = parsed.data;
+  const { name, location, notes, empresaId } = parsed.data;
 
-  if (contactId) {
-    const contact = await prisma.contact.findFirst({ where: { id: contactId, ownerId: userId } });
-    if (!contact) {
-      return NextResponse.json({ error: "Contato não encontrado." }, { status: 400 });
+  if (empresaId) {
+    const empresa = await prisma.empresa.findUnique({ where: { id: empresaId } });
+    if (!empresa) {
+      return NextResponse.json({ error: "Empresa não encontrada." }, { status: 400 });
     }
   }
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       name,
       location: location || null,
       notes: notes || null,
-      contactId: contactId || null,
+      empresaId: empresaId || null,
       ownerId: userId,
     },
   });

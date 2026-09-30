@@ -16,7 +16,7 @@ export default async function ExInspectionPage({ params }: Params) {
     where: { id, ownerId: userId },
     include: {
       facility: { select: { id: true, name: true } },
-      quote: { select: { id: true, number: true, title: true } },
+      trabalho: { select: { id: true, crmId: true, status: true } },
       items: { orderBy: { order: "asc" } },
     },
   });
@@ -34,7 +34,7 @@ export default async function ExInspectionPage({ params }: Params) {
         inspectorName: inspection.inspectorName ?? "",
         notes: inspection.notes ?? "",
         facility: inspection.facility,
-        quote: inspection.quote,
+        trabalho: inspection.trabalho,
       }}
       items={inspection.items.map((item) => ({
         id: item.id,

@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FacilityFormModal, type ContactOption } from "@/components/ex-facilities-client";
+import { FacilityFormModal, type EmpresaOption } from "@/components/ex-facilities-client";
 import { ExAreaFormModal, type ExAreaFormValues } from "@/components/ex-area-form-modal";
 import { ExEquipmentFormModal, type ExEquipmentFormValues } from "@/components/ex-equipment-form-modal";
-import { ExInspectionFormModal, type QuoteOption } from "@/components/ex-inspection-form-modal";
+import { ExInspectionFormModal, type TrabalhoOption } from "@/components/ex-inspection-form-modal";
 import { checkEquipmentSuitability } from "@/lib/ex-suitability";
 import {
   EX_ATMOSPHERE_LABELS,
@@ -15,6 +15,7 @@ import {
   EX_INSPECTION_TYPE_LABELS,
   EX_ZONE_LABELS,
   INSPECTION_LEVEL_LABELS,
+  empresaLabel,
   formatProtectionTypes,
 } from "@/lib/labels";
 
@@ -69,8 +70,8 @@ type Facility = {
   name: string;
   location: string | null;
   notes: string | null;
-  contactId: string | null;
-  contact: { name: string; company: string | null } | null;
+  empresaId: string | null;
+  empresa: { razaoSocial: string; nomeFantasia: string | null } | null;
 };
 
 type Modal =
@@ -123,14 +124,14 @@ export function ExFacilityClient({
   facility,
   areas,
   inspections,
-  contacts,
-  quotes,
+  empresas,
+  trabalhos,
 }: {
   facility: Facility;
   areas: Area[];
   inspections: InspectionRow[];
-  contacts: ContactOption[];
-  quotes: QuoteOption[];
+  empresas: EmpresaOption[];
+  trabalhos: TrabalhoOption[];
 }) {
   const router = useRouter();
   const [modal, setModal] = useState<Modal>(null);
@@ -162,9 +163,7 @@ export function ExFacilityClient({
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">{facility.name}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {facility.contact
-              ? `${facility.contact.name}${facility.contact.company ? ` (${facility.contact.company})` : ""}`
-              : "Sem cliente vinculado"}
+            {facility.empresa ? empresaLabel(facility.empresa) : "Sem empresa vinculada"}
             {facility.location ? ` · ${facility.location}` : ""}
           </p>
         </div>
@@ -427,13 +426,13 @@ export function ExFacilityClient({
 
       {modal?.kind === "facility" && (
         <FacilityFormModal
-          contacts={contacts}
+          empresas={empresas}
           initialValues={{
             id: facility.id,
             name: facility.name,
             location: facility.location ?? "",
             notes: facility.notes ?? "",
-            contactId: facility.contactId ?? "",
+            empresaId: facility.empresaId ?? "",
           }}
           onClose={closeModal}
         />
@@ -452,7 +451,7 @@ export function ExFacilityClient({
         <ExInspectionFormModal
           facilityId={facility.id}
           areas={areas.map((area) => ({ id: area.id, name: area.name, equipmentCount: area.equipment.length }))}
-          quotes={quotes}
+          trabalhos={trabalhos}
           onClose={closeModal}
         />
       )}

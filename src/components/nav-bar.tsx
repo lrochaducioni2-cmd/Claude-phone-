@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/pipeline", label: "Pipeline" },
   { href: "/tasks", label: "Tarefas" },
   { href: "/quotes", label: "Orçamentos" },
+  { href: "/trabalhos", label: "Trabalhos" },
   { href: "/ex", label: "Inspeção Ex" },
 ];
 

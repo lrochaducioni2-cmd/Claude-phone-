@@ -6,19 +6,19 @@ import { Field, FormActions, ModalShell, inputClass, submitJson } from "@/compon
 import { EX_INSPECTION_TYPE_LABELS, INSPECTION_LEVEL_LABELS } from "@/lib/labels";
 import { toDateInputValue } from "@/lib/ex-dates";
 
-export type QuoteOption = { id: string; number: number; title: string };
+export type TrabalhoOption = { id: string; crmId: string; descricaoEscopo: string };
 
 type AreaOption = { id: string; name: string; equipmentCount: number };
 
 export function ExInspectionFormModal({
   facilityId,
   areas,
-  quotes,
+  trabalhos,
   onClose,
 }: {
   facilityId: string;
   areas: AreaOption[];
-  quotes: QuoteOption[];
+  trabalhos: TrabalhoOption[];
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -26,7 +26,7 @@ export function ExInspectionFormModal({
   const [type, setType] = useState("PERIODICA");
   const [inspectorName, setInspectorName] = useState("");
   const [date, setDate] = useState(() => toDateInputValue(new Date()));
-  const [quoteId, setQuoteId] = useState("");
+  const [trabalhoId, setTrabalhoId] = useState(trabalhos.length === 1 ? trabalhos[0].id : "");
   const [notes, setNotes] = useState("");
   const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>(
     areas.filter((area) => area.equipmentCount > 0).map((area) => area.id),
@@ -53,7 +53,7 @@ export function ExInspectionFormModal({
     const result = await submitJson(
       "/api/ex/inspections",
       "POST",
-      { facilityId, level, type, inspectorName, date, quoteId, notes, areaIds: selectedAreaIds },
+      { facilityId, level, type, inspectorName, date, trabalhoId, notes, areaIds: selectedAreaIds },
       "Não foi possível criar a inspeção.",
     );
     setLoading(false);
@@ -96,15 +96,18 @@ export function ExInspectionFormModal({
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
           </Field>
         </div>
-        <Field label="Orçamento vinculado">
-          <select value={quoteId} onChange={(e) => setQuoteId(e.target.value)} className={inputClass}>
+        <Field label="Trabalho (CRM)">
+          <select value={trabalhoId} onChange={(e) => setTrabalhoId(e.target.value)} className={inputClass}>
             <option value="">— Nenhum —</option>
-            {quotes.map((quote) => (
-              <option key={quote.id} value={quote.id}>
-                #{quote.number} — {quote.title}
+            {trabalhos.map((trabalho) => (
+              <option key={trabalho.id} value={trabalho.id}>
+                CRM #{trabalho.crmId} — {trabalho.descricaoEscopo}
               </option>
             ))}
           </select>
+          <p className="mt-1 text-xs text-slate-500">
+            A entrega ao CRM é feita pelo trabalho, depois que todas as inspeções dele forem concluídas.
+          </p>
         </Field>
 
         <fieldset>

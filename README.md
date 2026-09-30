@@ -27,6 +27,11 @@ pipeline de vendas, tarefas de follow-up e (em breve) orçamentos.
   superfície). Inspeções Visual/Apurada/Detalhada geram um checklist por equipamento
   conforme o tipo de proteção (Tabelas 1, 2 e 3 da norma), com resultado
   Conforme/Não conforme/Pendente e relatório imprimível (salvar como PDF pelo navegador).
+- **Trabalhos (integração com o CRM)**: lista os trabalhos `vendido` do CRM, importa
+  empresa e trabalho **por API** ao iniciar a execução e avisa o CRM na entrega
+  (`em_execucao` → `entregue`, com data e link do relatório). Detalhes e ajustes
+  propostos ao contrato em [`INTEGRACAO.md`](./INTEGRACAO.md). Para desenvolver sem o
+  CRM real: `npm run crm:mock`.
 
 ## Rodando localmente
 

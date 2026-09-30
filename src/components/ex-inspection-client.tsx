@@ -26,7 +26,7 @@ type Inspection = {
   inspectorName: string;
   notes: string;
   facility: { id: string; name: string };
-  quote: { id: string; number: number; title: string } | null;
+  trabalho: { id: string; crmId: string; status: string } | null;
 };
 
 export type InspectionItemRow = {
@@ -108,11 +108,11 @@ export function ExInspectionClient({ inspection, items }: { inspection: Inspecti
             {EX_INSPECTION_TYPE_LABELS[inspection.type]} ·{" "}
             {new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(`${inspection.date}T12:00:00Z`))}
             {inspection.inspectorName ? ` · Inspetor: ${inspection.inspectorName}` : ""}
-            {inspection.quote ? (
+            {inspection.trabalho ? (
               <>
                 {" · "}
-                <Link href={`/quotes/${inspection.quote.id}`} className="hover:underline">
-                  Orçamento #{inspection.quote.number}
+                <Link href={`/trabalhos/${inspection.trabalho.id}`} className="hover:underline">
+                  Trabalho CRM #{inspection.trabalho.crmId}
                 </Link>
               </>
             ) : null}
@@ -130,7 +130,9 @@ export function ExInspectionClient({ inspection, items }: { inspection: Inspecti
           >
             Relatório
           </Link>
-          {locked ? (
+          {inspection.trabalho?.status === "ENTREGUE" ? (
+            <span className="text-xs text-slate-500">Trabalho entregue</span>
+          ) : locked ? (
             <button
               onClick={() => changeStatus("EM_ANDAMENTO")}
               disabled={statusLoading}

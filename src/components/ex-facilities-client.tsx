@@ -4,39 +4,40 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Field, FormActions, ModalShell, inputClass, submitJson } from "@/components/ex-form-fields";
+import { empresaLabel } from "@/lib/labels";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" });
 
-export type ContactOption = { id: string; name: string; company: string | null };
+export type EmpresaOption = { id: string; razaoSocial: string; nomeFantasia: string | null };
 
 export type ExFacilityRow = {
   id: string;
   name: string;
   location: string | null;
   notes: string | null;
-  contactId: string | null;
-  contact: { name: string; company: string | null } | null;
+  empresaId: string | null;
+  empresa: { razaoSocial: string; nomeFantasia: string | null } | null;
   areaCount: number;
   equipmentCount: number;
   lastInspection: string | null;
 };
 
-type FacilityFormValues = {
+export type FacilityFormValues = {
   id?: string;
   name: string;
   location: string;
   notes: string;
-  contactId: string;
+  empresaId: string;
 };
 
-const EMPTY_VALUES: FacilityFormValues = { name: "", location: "", notes: "", contactId: "" };
+const EMPTY_VALUES: FacilityFormValues = { name: "", location: "", notes: "", empresaId: "" };
 
 export function ExFacilitiesClient({
   facilities,
-  contacts,
+  empresas,
 }: {
   facilities: ExFacilityRow[];
-  contacts: ContactOption[];
+  empresas: EmpresaOption[];
 }) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
@@ -54,7 +55,7 @@ export function ExFacilitiesClient({
       name: facility.name,
       location: facility.location ?? "",
       notes: facility.notes ?? "",
-      contactId: facility.contactId ?? "",
+      empresaId: facility.empresaId ?? "",
     });
     setModalOpen(true);
   }
@@ -119,9 +120,7 @@ export function ExFacilitiesClient({
                     <div className="text-xs text-slate-400">{facility.location || ""}</div>
                   </td>
                   <td className="px-4 py-3 text-slate-600">
-                    {facility.contact
-                      ? `${facility.contact.name}${facility.contact.company ? ` (${facility.contact.company})` : ""}`
-                      : "—"}
+                    {facility.empresa ? empresaLabel(facility.empresa) : "—"}
                   </td>
                   <td className="px-4 py-3 text-right text-slate-600">{facility.areaCount}</td>
                   <td className="px-4 py-3 text-right text-slate-600">{facility.equipmentCount}</td>
@@ -153,7 +152,7 @@ export function ExFacilitiesClient({
       {modalOpen && (
         <FacilityFormModal
           key={editing?.id ?? "new"}
-          contacts={contacts}
+          empresas={empresas}
           initialValues={editing}
           onClose={() => setModalOpen(false)}
         />
@@ -163,11 +162,11 @@ export function ExFacilitiesClient({
 }
 
 export function FacilityFormModal({
-  contacts,
+  empresas,
   initialValues,
   onClose,
 }: {
-  contacts: ContactOption[];
+  empresas: EmpresaOption[];
   initialValues?: FacilityFormValues;
   onClose: () => void;
 }) {
@@ -209,20 +208,24 @@ export function FacilityFormModal({
             className={inputClass}
           />
         </Field>
-        <Field label="Cliente">
+        <Field label="Empresa (cliente do CRM)">
           <select
-            value={values.contactId}
-            onChange={(e) => setValues((v) => ({ ...v, contactId: e.target.value }))}
+            value={values.empresaId}
+            onChange={(e) => setValues((v) => ({ ...v, empresaId: e.target.value }))}
             className={inputClass}
           >
-            <option value="">— Nenhum —</option>
-            {contacts.map((contact) => (
-              <option key={contact.id} value={contact.id}>
-                {contact.name}
-                {contact.company ? ` (${contact.company})` : ""}
+            <option value="">— Nenhuma —</option>
+            {empresas.map((empresa) => (
+              <option key={empresa.id} value={empresa.id}>
+                {empresaLabel(empresa)}
               </option>
             ))}
           </select>
+          {empresas.length === 0 && (
+            <p className="mt-1 text-xs text-slate-500">
+              As empresas chegam do CRM ao iniciar um trabalho vendido (menu Trabalhos).
+            </p>
+          )}
         </Field>
         <Field label="Localização">
           <input

@@ -73,6 +73,25 @@ export function isInspectionQuoteType(type: string): boolean {
 
 // --- Inspeção Ex ---------------------------------------------------------
 
+/** Nome de exibição da empresa (dados vindos do CRM). */
+export function empresaLabel(empresa: { razaoSocial: string; nomeFantasia: string | null }): string {
+  return empresa.nomeFantasia ? `${empresa.nomeFantasia} (${empresa.razaoSocial})` : empresa.razaoSocial;
+}
+
+export const TRABALHO_STATUS_LABELS: Record<string, string> = {
+  VENDIDO: "Vendido",
+  EM_EXECUCAO: "Em execução",
+  ENTREGUE: "Entregue",
+  CANCELADO: "Cancelado",
+};
+
+export const TRABALHO_STATUS_COLORS: Record<string, string> = {
+  VENDIDO: "bg-blue-100 text-blue-700",
+  EM_EXECUCAO: "bg-amber-100 text-amber-700",
+  ENTREGUE: "bg-green-100 text-green-700",
+  CANCELADO: "bg-slate-100 text-slate-700",
+};
+
 export const EX_ATMOSPHERE_LABELS: Record<string, string> = {
   GAS: "Gás",
   POEIRA: "Poeira",

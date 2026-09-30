@@ -13,9 +13,18 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const { id } = await params;
-  const existing = await prisma.exInspection.findFirst({ where: { id, ownerId: userId } });
+  const existing = await prisma.exInspection.findFirst({
+    where: { id, ownerId: userId },
+    include: { trabalho: { select: { status: true } } },
+  });
   if (!existing) {
     return NextResponse.json({ error: "Inspeção não encontrada." }, { status: 404 });
+  }
+  if (existing.trabalho?.status === "ENTREGUE") {
+    return NextResponse.json(
+      { error: "O trabalho desta inspeção já foi entregue ao cliente; ela não pode mais ser alterada." },
+      { status: 409 },
+    );
   }
 
   const body = await request.json().catch(() => null);
@@ -59,9 +68,18 @@ export async function DELETE(_request: Request, { params }: Params) {
   }
 
   const { id } = await params;
-  const existing = await prisma.exInspection.findFirst({ where: { id, ownerId: userId } });
+  const existing = await prisma.exInspection.findFirst({
+    where: { id, ownerId: userId },
+    include: { trabalho: { select: { status: true } } },
+  });
   if (!existing) {
     return NextResponse.json({ error: "Inspeção não encontrada." }, { status: 404 });
+  }
+  if (existing.trabalho?.status === "ENTREGUE") {
+    return NextResponse.json(
+      { error: "O trabalho desta inspeção já foi entregue ao cliente; ela não pode ser excluída." },
+      { status: 409 },
+    );
   }
 
   await prisma.exInspection.delete({ where: { id } });

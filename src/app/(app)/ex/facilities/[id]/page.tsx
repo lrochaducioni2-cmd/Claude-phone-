@@ -13,7 +13,7 @@ export default async function ExFacilityPage({ params }: Params) {
   const facility = await prisma.exFacility.findFirst({
     where: { id, ownerId: userId },
     include: {
-      contact: { select: { name: true, company: true } },
+      empresa: { select: { razaoSocial: true, nomeFantasia: true } },
       areas: {
         orderBy: { name: "asc" },
         include: { equipment: { orderBy: { tag: "asc" } } },
@@ -26,16 +26,16 @@ export default async function ExFacilityPage({ params }: Params) {
   });
   if (!facility) notFound();
 
-  const [contacts, quotes] = await Promise.all([
-    prisma.contact.findMany({
-      where: { ownerId: userId },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, company: true },
+  const [empresas, trabalhos] = await Promise.all([
+    prisma.empresa.findMany({
+      orderBy: { razaoSocial: "asc" },
+      select: { id: true, razaoSocial: true, nomeFantasia: true },
     }),
-    prisma.quote.findMany({
-      where: { ownerId: userId, ...(facility.contactId && { contactId: facility.contactId }) },
-      orderBy: { number: "desc" },
-      select: { id: true, number: true, title: true },
+    // Só trabalhos em execução da empresa desta instalação podem receber inspeções.
+    prisma.trabalho.findMany({
+      where: { status: "EM_EXECUCAO", ...(facility.empresaId && { empresaId: facility.empresaId }) },
+      orderBy: { importedAt: "desc" },
+      select: { id: true, crmId: true, descricaoEscopo: true },
     }),
   ]);
 
@@ -46,8 +46,8 @@ export default async function ExFacilityPage({ params }: Params) {
         name: facility.name,
         location: facility.location,
         notes: facility.notes,
-        contactId: facility.contactId,
-        contact: facility.contact,
+        empresaId: facility.empresaId,
+        empresa: facility.empresa,
       }}
       areas={facility.areas}
       inspections={facility.inspections.map((inspection) => ({
@@ -62,8 +62,8 @@ export default async function ExFacilityPage({ params }: Params) {
         conforme: inspection.items.filter((item) => item.result === "CONFORME").length,
         naoConforme: inspection.items.filter((item) => item.result === "NAO_CONFORME").length,
       }))}
-      contacts={contacts}
-      quotes={quotes}
+      empresas={empresas}
+      trabalhos={trabalhos}
     />
   );
 }

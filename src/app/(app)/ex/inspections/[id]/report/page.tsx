@@ -9,6 +9,7 @@ import {
   EX_INSPECTION_TYPE_LABELS,
   EX_ITEM_RESULT_LABELS,
   INSPECTION_LEVEL_LABELS,
+  empresaLabel,
   formatProtectionTypes,
 } from "@/lib/labels";
 
@@ -30,8 +31,8 @@ export default async function ExInspectionReportPage({ params }: Params) {
   const inspection = await prisma.exInspection.findFirst({
     where: { id, ownerId: userId },
     include: {
-      facility: { include: { contact: { select: { name: true, company: true } } } },
-      quote: { select: { number: true } },
+      facility: { include: { empresa: true } },
+      trabalho: { select: { crmId: true } },
       items: { orderBy: { order: "asc" } },
     },
   });
@@ -48,7 +49,7 @@ export default async function ExInspectionReportPage({ params }: Params) {
 
   const count = (result: string) => items.filter((item) => item.result === result).length;
   const nonConforming = items.filter((item) => item.result === "NAO_CONFORME");
-  const client = inspection.facility.contact;
+  const empresa = inspection.facility.empresa;
 
   return (
     <div className="mx-auto max-w-4xl text-sm text-slate-800">
@@ -76,7 +77,7 @@ export default async function ExInspectionReportPage({ params }: Params) {
           <ReportField label="Instalação" value={inspection.facility.name} />
           <ReportField
             label="Cliente"
-            value={client ? `${client.name}${client.company ? ` (${client.company})` : ""}` : "—"}
+            value={empresa ? empresaLabel(empresa) : "—"}
           />
           <ReportField label="Localização" value={inspection.facility.location || "—"} />
           <ReportField label="Data" value={dateFormat.format(inspection.date)} />
@@ -84,7 +85,8 @@ export default async function ExInspectionReportPage({ params }: Params) {
           <ReportField label="Tipo de inspeção" value={EX_INSPECTION_TYPE_LABELS[inspection.type]} />
           <ReportField label="Inspetor responsável" value={inspection.inspectorName || "—"} />
           <ReportField label="Situação" value={EX_INSPECTION_STATUS_LABELS[inspection.status]} />
-          {inspection.quote && <ReportField label="Orçamento" value={`#${inspection.quote.number}`} />}
+          {empresa?.cnpj && <ReportField label="CNPJ" value={empresa.cnpj} />}
+          {inspection.trabalho && <ReportField label="Trabalho (CRM)" value={`#${inspection.trabalho.crmId}`} />}
         </dl>
 
         <section className="mt-6">
